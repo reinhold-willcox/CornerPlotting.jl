@@ -65,7 +65,7 @@ function CornerPlot(results, names::Vector{Symbol};
         fig=Figure(), quantile_for_range=0.01,
         use_weights = true, fraction_1D=0.9, fractions_2D=[0.9], 
         show_CIs=true, nbins=100, nbins_contour=20,
-        axis_size=100)
+        axis_size=100, return_only_1D_hist_values=false)
 
     num_col = length(names)
     
@@ -101,38 +101,41 @@ function CornerPlot(results, names::Vector{Symbol};
     end
  
     # Create 2D density plots
-    for ii in 1:num_col-1         # ii is the x-coord param
-        name_x = names[ii]
-        for  jj in ii+1:num_col   # jj is the y-coord param
-            name_y = names[jj]
-            axis = Axis(fig[jj+1,ii], xlabel=labels[name_x], ylabel=labels[name_y], height=axis_size, width=axis_size)
-            distributions_2d[name_x][name_y] = axis
-            if name_x ∉ keys(scaling)
-                values_x = results[name_x]
-            else
-                values_x = results[name_x]./scaling[name_x]
-            end
-            if name_y ∉ keys(scaling)
-                values_y = results[name_y]
-            else
-                values_y = results[name_y]./scaling[name_y]
-            end
+    if !return_only_1D_hist_values
+        for ii in 1:num_col-1         # ii is the x-coord param
+            name_x = names[ii]
+            for  jj in ii+1:num_col   # jj is the y-coord param
+                name_y = names[jj]
+                axis = Axis(fig[jj+1,ii], xlabel=labels[name_x], ylabel=labels[name_y], height=axis_size, width=axis_size)
+                distributions_2d[name_x][name_y] = axis
+                if name_x ∉ keys(scaling)
+                    values_x = results[name_x]
+                else
+                    values_x = results[name_x]./scaling[name_x]
+                end
+                if name_y ∉ keys(scaling)
+                    values_y = results[name_y]
+                else
+                    values_y = results[name_y]./scaling[name_y]
+                end
 
-            plot_2D_density(axis, name_x, name_y, values_x, ranges[name_x], values_y, ranges[name_y],
-                sample_weights, fractions_2D, nbins_heatmap=nbins, nbins_contour=nbins_contour)
-            if ii>1
-                hideydecorations!(axis, ticks=false, minorticks=false)
-            end
-            if jj!=num_col
-                hidexdecorations!(axis,ticks=false, minorticks=false)
-            end         
-            xlims!(axis, (ranges[name_x][1], ranges[name_x][2]))
-            ylims!(axis, (ranges[name_y][1], ranges[name_y][2]))
-        end  
+                plot_2D_density(axis, name_x, name_y, values_x, ranges[name_x], values_y, ranges[name_y],
+                    sample_weights, fractions_2D, nbins_heatmap=nbins, nbins_contour=nbins_contour)
+                if ii>1
+                    hideydecorations!(axis, ticks=false, minorticks=false)
+                end
+                if jj!=num_col
+                    hidexdecorations!(axis,ticks=false, minorticks=false)
+                end         
+                xlims!(axis, (ranges[name_x][1], ranges[name_x][2]))
+                ylims!(axis, (ranges[name_y][1], ranges[name_y][2]))
+            end  
+        end
     end
     # Create 1D PDFs along the diagonal
     distributions_1d = Dict() # we will add the distributions with their names here
     latex_bounds_array = Array{AbstractString}(undef, num_col)
+    xvals_yvals_dict = Dict()
     for ii in 1:num_col
         name_x = names[ii]
         axis = Axis(fig[ii+1,ii], xlabel=labels[name_x], height=axis_size, width=axis_size)
@@ -144,6 +147,7 @@ function CornerPlot(results, names::Vector{Symbol};
         end
         (xmin, xmode, xmax), x, h, y, dx, frac_lost =
             plot_compound_1D_density(axis, name_x, values_x, ranges[name_x], sample_weights, fraction_1D, nbins)
+        xvals_yvals_dict[name_x] = (x, y)
 
         # Remove labels on the diagonals, except xlabel on the bottom right
         hideydecorations!(axis)
@@ -166,7 +170,11 @@ function CornerPlot(results, names::Vector{Symbol};
     end     
     resize_to_layout!(fig)
     
-    return CornerPlot(fig, ranges, distributions_1d, distributions_2d)
+    if return_only_1D_hist_values
+        return xvals_yvals_dict
+    else
+        return CornerPlot(fig, ranges, distributions_1d, distributions_2d)
+    end
 end
 
 """
@@ -454,3 +462,32 @@ function plot_extra_1D_distribution(corner_plot, name_x, distribution::Distribut
     lines!(corner_plot.distributions_1d[name_x], xvals, yvals,
             linewidth=linewidth, color=color, linestyle=linestyle)
 end
+
+
+"""
+    add_true_values(names, true_vals_dict)
+
+names are the names you want to plot here
+true_vals_dict is the dict containing all true values (so you only need to set this once)
+
+"""
+function add_true_values(names, true_vals_dict)
+    for ii in 0:length(names)
+        param0 = names[ii]
+        if param0 ∉ keys(true_vals)
+            continue
+        end
+        ax = corner_plot.distributions_0d[param1]
+        vlines!(ax, true_vals[param0], color=:red, linestyle=:dash, linewidth=3)
+        for jj in 0:ii-1
+            param1 = names[jj]
+            if param1 ∉ keys(true_vals)
+                continue
+            end
+            ax = corner_plot.distributions_1d[param2][param1]
+            scatter!(ax, true_vals[param1], true_vals[param1], color=:red, markersize=10)
+        end
+    end
+end
+
+
