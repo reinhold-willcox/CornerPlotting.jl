@@ -4,6 +4,7 @@ using CairoMakie.Colors
 using StyledStrings
 using Distributions
 using Printf
+using SideKicks
 
 #export get_results
 #export createPlottingProps
