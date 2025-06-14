@@ -690,15 +690,7 @@ function plot_compound_1D_density(axis, name, values_x, range_x, sample_weights,
     end
 
     effective_fraction = [fraction_1D * (1/(1-frac_lost))] # need to rescale to the remaining part of the distribution
-    println("\nhere ==========")
-    println(dx)
-    println("----")
-    println(effective_fraction)
-    println(fraction_1D)
-    println(frac_lost)
     bound = get_bounds_for_fractions(h.weights, effective_fraction)[1]
-    print("bound = ")
-    println(bound)
     xmin = minimum(x[h.weights .>= bound]) - dx/2 # get left most value of bin
     xmax = maximum(x[h.weights .>= bound]) + dx/2
     xmode = x[argmax(h.weights)]
