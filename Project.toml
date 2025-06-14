@@ -1,7 +1,7 @@
 name = "CornerPlotting"
 uuid = "ea95a4b9-62c8-4fa2-8d37-53bdcab85796"
 authors = ["Reinhold Willcox <reinhold.willcox@gmail.com>"]
-version = "0.1.1"
+version = "0.1.2"
 
 [deps]
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
