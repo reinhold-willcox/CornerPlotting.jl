@@ -1,6 +1,7 @@
 module CornerPlotting
 
 include("DefaultTheme.jl")
-include("Plotter.jl")
+include("ConstructPlots.jl")
+include("dumb.jl")
 
 end
