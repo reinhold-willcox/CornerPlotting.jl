@@ -5,11 +5,7 @@ using StyledStrings
 using Distributions
 using Printf
 using SideKicks
-
-#export get_results
-#export createPlottingProps
-#export MasterCornerPlot
-#export PlotOverlappingHistograms
+using JLD2
 
 ##
 
@@ -450,8 +446,6 @@ function get_bounds_for_fractions(weights, fractions)
         # find HDI 
         for ii in 1:15
             newbound = 0.5*(minbound+maxbound)
-            #print("  nb = ")
-            #println(newbound)
             integral2 = sum(weights[weights.>newbound])
             newfraction = integral2/integral
             if newfraction>fraction
